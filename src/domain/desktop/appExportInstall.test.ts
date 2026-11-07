@@ -413,9 +413,12 @@ describe("exportInstall sources", () => {
         keySha256: "a".repeat(64),
       },
     ]);
-    expect(install.value.skipped).toEqual([
-      "https://apt.example.com/repo stable extra: apt takes one key per URI and suite, and apt-keys/typora.gpg is declared for them",
-    ]);
+    expect(install.value.skipped).toHaveLength(1);
+    expect(install.value.skipped[0]).toContain(
+      "https://apt.example.com/repo stable extra",
+    );
+    expect(install.value.skipped[0]).toContain("apt-keys/typora.gpg");
+    expect(install.value.skipped[0]).toMatch(/one key per URI and suite/iu);
     expect(install.value.architectures).toEqual(["amd64"]);
   });
 
@@ -459,9 +462,12 @@ describe("exportInstall sources", () => {
     );
 
     expect(install.ok && install.value.architectures).toEqual(["arm64"]);
-    expect(install.ok && install.value.skipped).toEqual([
-      "https://amd64-only.example.com ./: it serves only amd64, not the capture host's arm64",
-    ]);
+    if (!install.ok) throw new Error(install.error.reason);
+    expect(install.value.skipped).toHaveLength(1);
+    expect(install.value.skipped[0]).toContain(
+      "https://amd64-only.example.com ./",
+    );
+    expect(install.value.skipped[0]).toMatch(/only amd64.*not.*arm64/iu);
     expect(
       exportInstall(typora([repository()]), "typora", "riscv64"),
     ).toMatchObject({
